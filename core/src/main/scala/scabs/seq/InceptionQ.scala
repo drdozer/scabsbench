@@ -3,8 +3,6 @@ package scabs.seq
 import shapeless.newtype
 import shapeless.newtype._
 
-import scala.language.implicitConversions
-
 trait InceptionQ[E] {
   def toStructure: String
 
@@ -734,10 +732,10 @@ object InceptionQ {
     override def isEmpty: Boolean = false
 
     override def ++(rhs: InceptionQ[E]): InceptionQ[E] = rhs match {
-      case Unity     (         s) => ConsPASnoc(cons, pre                   , app                    , SNil :+ s)
-      case c@Cons    (_         ) => ConsPA    (cons, pre, app :+ rev(     c      )         )
-      case ConsP     (c, p      ) => ConsPA    (cons, pre, app :+ rev(Cons(c) +: p)         )
-      case ConsA     (c,    a   ) => ConsPA    (cons, pre             ,         rev(Cons(c)     ) :<: a   )
+      case Unity     (         s) => ConsPASnoc(cons, pre             , app                    , SNil :+ s)
+      case c@Cons    (_         ) => ConsPA    (cons, pre             , app  :+ rev(     c      )         )
+      case ConsP     (c, p      ) => ConsPA    (cons, pre             , app  :+ rev(Cons(c) +: p)         )
+      case ConsA     (c,    a   ) => ConsPA    (cons, pre :>: rev(app),         rev(Cons(c)     ) :<: a   )
       case ConsPA    (c, p, a   ) => ConsPA    (cons, pre :>: rev(app),         rev(Cons(c) +: p) :<: a   )
       case ConsSnoc  (c,       s) => ConsPASnoc(cons, pre :>: rev(app), SNil :+ rev(Cons(c) )          , s)
       case ConsPSnoc (c, p,    s) => ConsPASnoc(cons, pre :>: rev(app), SNil :+ rev(Cons(c) +: p)      , s)
@@ -940,23 +938,23 @@ object InceptionQ {
     override def isEmpty: Boolean = false
 
     override def ++(rhs: InceptionQ[E]): InceptionQ[E] = rhs match {
-      case Unity     (         s) => ConsASnoc (cons,                                 app,                                   snoc :+ s)
-      case Cons      (c         ) => ConsPA    (cons, rev(app              ) +: CNil, SNil :+ SnoC(snoc) :+ rev(Cons(c)     )         )
-      case ConsP     (c, p      ) => ConsPA    (cons, rev(app :+ SnoC(snoc)) +: CNil, SNil :+               rev(Cons(c) +: p)         )
-      case ConsA     (c,    a   ) => ConsPA    (cons, rev(app :+ SnoC(snoc)) +: CNil,                       rev(Cons(c)     ) :<: a   )
-      case ConsPA    (c, p, a   ) => ConsPA    (cons, rev(app :+ SnoC(snoc)) +: CNil,                       rev(Cons(c) +: p) :<: a   )
-      case ConsSnoc  (c,       s) => ConsPASnoc(cons, rev(app              ) +: CNil, SNil :+ SnoC(snoc) :+ rev(Cons(c)     )      , s)
-      case ConsPSnoc (c, p,    s) => ConsPASnoc(cons, rev(app :+ SnoC(snoc)) +: CNil, SNil :+               rev(Cons(c) +: p)      , s)
-      case ConsASnoc (c,    a, s) => ConsPASnoc(cons, rev(app :+ SnoC(snoc)) +: CNil,                       rev(Cons(c)     ) :<: a, s)
-      case ConsPASnoc(c, p, a, s) => ConsPASnoc(cons, rev(app :+ SnoC(snoc)) +: CNil,                       rev(Cons(c) +: p) :<: a, s)
+      case Unity     (         s) => ConsASnoc (cons,                                 app,                     snoc :+ s)
+      case Cons      (c         ) => ConsPA    (cons, rev(app :+ SnoC(snoc)) +: CNil, SNil :+ rev(Cons(c)     )         )
+      case ConsP     (c, p      ) => ConsPA    (cons, rev(app :+ SnoC(snoc)) +: CNil, SNil :+ rev(Cons(c) +: p)         )
+      case ConsA     (c,    a   ) => ConsPA    (cons, rev(app :+ SnoC(snoc)) +: CNil,         rev(Cons(c)     ) :<: a   )
+      case ConsPA    (c, p, a   ) => ConsPA    (cons, rev(app :+ SnoC(snoc)) +: CNil,         rev(Cons(c) +: p) :<: a   )
+      case ConsSnoc  (c,       s) => ConsPASnoc(cons, rev(app :+ SnoC(snoc)) +: CNil, SNil :+ rev(Cons(c)     )      , s)
+      case ConsPSnoc (c, p,    s) => ConsPASnoc(cons, rev(app :+ SnoC(snoc)) +: CNil, SNil :+ rev(Cons(c) +: p)      , s)
+      case ConsASnoc (c,    a, s) => ConsPASnoc(cons, rev(app :+ SnoC(snoc)) +: CNil,         rev(Cons(c)     ) :<: a, s)
+      case ConsPASnoc(c, p, a, s) => ConsPASnoc(cons, rev(app :+ SnoC(snoc)) +: CNil,         rev(Cons(c) +: p) :<: a, s)
       case QNil()                 => this
-      case P         (   p      ) => ConsPA    (cons, rev(app              ) +: CNil, SNil :+ SnoC(snoc) :+ rev(           p)         )
-      case A         (      a   ) => ConsPA    (cons, rev(app              ) +: CNil,         SnoC(snoc)                      :<: a   )
-      case PA        (   p, a   ) => ConsPA    (cons, rev(app :+ SnoC(snoc)) +: CNil,                       rev(           p) :<: a   )
-      case Snoc      (         s) => ConsASnoc (cons,                                 app  :+ SnoC(snoc)                           , s)
-      case PSnoc     (   p,    s) => ConsPASnoc(cons, rev(app :+ SnoC(snoc)) +: CNil, SNil :+               rev(           p)      , s)
-      case ASnoc     (      a, s) => ConsPASnoc(cons, rev(app              ) +: CNil,         SnoC(snoc)                      :<: a, s)
-      case PASnoc    (   p, a, s) => ConsPASnoc(cons, rev(app              ) +: CNil,                       rev(           p) :<: a, s)
+      case P         (   p      ) => ConsPA    (cons, rev(app :+ SnoC(snoc)) +: CNil, SNil :+ rev(           p)         )
+      case A         (      a   ) => ConsPA    (cons, rev(app :+ SnoC(snoc)) +: CNil,                               a   )
+      case PA        (   p, a   ) => ConsPA    (cons, rev(app :+ SnoC(snoc)) +: CNil,         rev(           p) :<: a   )
+      case Snoc      (         s) => ConsASnoc (cons,                                 app  :+ SnoC(snoc)             , s)
+      case PSnoc     (   p,    s) => ConsPASnoc(cons, rev(app :+ SnoC(snoc)) +: CNil, SNil :+ rev(           p)      , s)
+      case ASnoc     (      a, s) => ConsPASnoc(cons, rev(app :+ SnoC(snoc)) +: CNil,                               a, s)
+      case PASnoc    (   p, a, s) => ConsPASnoc(cons, rev(app :+ SnoC(snoc)) +: CNil,         rev(           p) :<: a, s)
     }
 
     override def :+(a: E): InceptionQ[E] = ConsASnoc(cons, app, snoc :+ a)
@@ -1387,7 +1385,7 @@ object InceptionQ {
       case Snoc      (         s) => ASnoc (                                app  :+ SnoC(snoc)                           , s)
       case PSnoc     (   p,    s) => PASnoc(rev(app :+ SnoC(snoc)) +: CNil, SNil :+               rev(           p)      , s)
       case ASnoc     (      a, s) => PASnoc(rev(app              ) +: CNil,         SnoC(snoc)                      :<: a, s)
-      case PASnoc    (   p, a, s) => PASnoc(rev(app              ) +: CNil,                       rev(           p) :<: a, s)
+      case PASnoc    (   p, a, s) => PASnoc(rev(app :+ SnoC(snoc)) +: CNil,                       rev(           p) :<: a, s)
     }
 
     override def :+(a: E): InceptionQ[E] = ASnoc(app, snoc :+ a)

@@ -110,7 +110,7 @@ class InceptionQTest extends WordSpec with PropertyChecks with Matchers with App
       }
 
       "unsnoc" should {
-        "to a queue with one fewer elements" in {
+        "evaluate to a queue with one fewer elements" in {
           forAll(genOps) { ops: StackOps[Int] =>
             implicit val L = scabs.seq.StdlibInstances.listSequenceInstance
             val Q = implicitly[Sequence[InceptionQ]]
