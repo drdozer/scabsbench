@@ -53,12 +53,19 @@ object StackOps {
 
   implicit def shrinkOps[T]: Shrink[StackOps[T]] = Shrink[StackOps[T]] {
     case Empty() => Stream()
-    case Cons(_, ops) => Stream(ops)
-    case Snoc(_, ops) => Stream(ops)
+    case Cons(_, ops) => Stream(Empty(), ops)
+    case Snoc(_, ops) => Stream(Empty(), ops)
     case Append(Empty(), Empty()) => Stream(Empty())
-    case Append(Empty(), rhs) => Stream(Empty())
-    case Append(lhs, Empty()) => Stream(Empty())
-    case Append(lhs, rhs) => Stream(lhs, rhs, Empty())
+    case Append(Empty(), rhs) => Stream(Empty(), rhs)
+    case Append(lhs, Empty()) => Stream(Empty(), lhs)
+    case Append(lhs, rhs) =>
+      val here = Stream(Empty[T](), lhs, rhs)
+      val rec = for {
+        l <- shrinkOps.shrink(lhs)
+        r <- shrinkOps.shrink(rhs)
+      } yield Append(l, r)
+
+      here ++ rec
   }
 
   object taglessFinal {

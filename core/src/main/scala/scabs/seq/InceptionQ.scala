@@ -3,6 +3,8 @@ package scabs.seq
 import shapeless.newtype
 import shapeless.newtype._
 
+import scala.language.implicitConversions
+
 trait InceptionQ[E] {
   def toStructure: String
 
@@ -131,7 +133,7 @@ object InceptionQ {
     def reverse: Nel[E] = (head::tail).reverse match {
       case h::t => Nel(h, t)
     }
-    def mkString(start: String, sep: String, end: String) = (head::tail).mkString(start, sep, end)
+    def mkString(start: String, sep: String, end: String): String = (head::tail).mkString(start, sep, end)
   }
   object Nel {
     def apply[E](e: E): Nel[E] = Nel(e, Nil)
@@ -160,7 +162,7 @@ object InceptionQ {
     def carrySize[C]: Int = _l.foldLeft(0)((a, f) => a + f.size)
     def foldCarry[B](zero: B)(f: (B, E) => B): B =
       _l.foldLeft(zero)((b, c) => c.fold(b)(f))
-    def foreachCarry[B](f: E => B) = _l.foreach(_ foreach f)
+    def foreachCarry[B](f: E => B): Unit = _l.foreach(_ foreach f)
     def mapCarry[B](f: E => B): ConsCarryList[B] =
       ConsCarryList(_l map (_ map f))
 
@@ -1139,8 +1141,8 @@ object InceptionQ {
       case Unity     (         s) => ASnoc (                  app,                     SNil :+ s)
       case c@Cons    (_         ) => A     (                  app  :+ rev(c           )         )
       case ConsP     (c, p      ) => A     (                  app  :+ rev(Cons(c) +: p)         )
-      case ConsA     (c,    a   ) => PA    (rev(app) +: CNil,                               a   )
-      case ConsPA    (c, p, a   ) => PA    (rev(app) +: CNil,         rev(           p) :<: a   )
+      case ConsA     (c,    a   ) => PA    (rev(app) +: CNil,         rev(Cons(c)     ) :<: a   )
+      case ConsPA    (c, p, a   ) => PA    (rev(app) +: CNil,         rev(Cons(c) +: p) :<: a   )
       case ConsSnoc  (c,       s) => ASnoc (                  app  :+ rev(Cons(c)     )      , s)
       case ConsPSnoc (c, p,    s) => ASnoc (                  app  :+ rev(Cons(c) +: p)      , s)
       case ConsASnoc (c,    a, s) => PASnoc(rev(app) +: CNil,         rev(Cons(c)     ) :<: a, s)
@@ -1192,12 +1194,12 @@ object InceptionQ {
 
     override def ++(rhs: InceptionQ[E]): InceptionQ[E] = rhs match {
       case Unity     (         s) => PASnoc(pre             , app,                     SNil :+ s)
-      case c@Cons    (_         ) => PA    (pre             , app  :+ rev(c           )         )
+      case c@Cons    (_         ) => PA    (pre             , app  :+ rev(     c      )         )
       case ConsP     (c, p      ) => PA    (pre             , app  :+ rev(Cons(c) +: p)         )
-      case ConsA     (c,    a   ) => PA    (pre :>: rev(app),                               a   )
-      case ConsPA    (c, p, a   ) => PA    (pre :>: rev(app),         rev(           p) :<: a   )
+      case ConsA     (c,    a   ) => PA    (pre :>: rev(app),         rev(Cons(c)     ) :<: a   )
+      case ConsPA    (c, p, a   ) => PA    (pre :>: rev(app),         rev(Cons(c) +: p) :<: a   )
       case ConsSnoc  (c,       s) => PASnoc(pre             , app  :+ rev(Cons(c)     )      , s)
-      case ConsPSnoc (c, p,    s) => PASnoc(pre :>: rev(app), SNil :+ rev(           p)      , s)
+      case ConsPSnoc (c, p,    s) => PASnoc(pre :>: rev(app), SNil :+ rev(Cons(c) +: p)      , s)
       case ConsASnoc (c,    a, s) => PASnoc(pre :>: rev(app),         rev(Cons(c)     ) :<: a, s)
       case ConsPASnoc(c, p, a, s) => PASnoc(pre :>: rev(app),         rev(Cons(c) +: p) :<: a, s)
       case QNil()                 => this
