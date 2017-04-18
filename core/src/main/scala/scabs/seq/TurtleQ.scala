@@ -28,6 +28,8 @@ sealed trait TurtleQ[A] {
   def map[B](f: A => B): TurtleQ[B]
 
   def fold[B](zero: B)(f: (B, A) => B): B
+
+  def foreach[B](f: A => B): Unit
 }
 
 
@@ -54,7 +56,11 @@ object TurtleQ {
 
       override def lengthSeq[A](q: TurtleQ[A]): Int = q.size
 
-      override def fold[A, B](q: TurtleQ[A])(z: B)(f: (B, A) => B): B = q.fold(z)(f)
+      override def fold[A, B](q: TurtleQ[A])(z: B)(f: (B, A) => B): B = {
+        var result = z
+        this.foreach(q)(x => result = f(result, x))
+        result
+      }
 
       override def toList[A](q: TurtleQ[A]): List[A] =
         q.fold[List[A]](Nil)((e, i) => i :: e)
@@ -68,7 +74,7 @@ object TurtleQ {
 
       override def map[A, B](q: TurtleQ[A])(f: (A) => B): TurtleQ[B] = q.map(f)
 
-      override def foreach[A, U](q: TurtleQ[A])(f: (A) => U): Unit = q.map(f)
+      override def foreach[A, U](q: TurtleQ[A])(f: (A) => U): Unit = q.foreach(f)
 
       override def concat[A](fst: TurtleQ[A], snd: TurtleQ[A]): TurtleQ[A] = fst ++ snd
     }
@@ -133,6 +139,8 @@ object TurtleQ {
     override def map[B](f: A => B): TNil[B] = tnil.asInstanceOf[TNil[B]]
 
     override def fold[B](zero: B)(f: (B, A) => B): B = zero
+
+    override def foreach[B](f: (A) => B): Unit = {}
   }
 
   final case class Cons[A](head: A, tails: List[A]) extends NonEmpty[A] with ConsOrEmpty[A] {
@@ -183,6 +191,11 @@ object TurtleQ {
     override def map[B](f: (A) => B): Cons[B] = Cons(f(head), tails map f)
 
     override def fold[B](zero: B)(f: (B, A) => B): B = tails.foldLeft(f(zero, head))(f)
+
+    override def foreach[B](f: (A) => B): Unit = {
+      f(head)
+      tails foreach f
+    }
   }
 
   final case class Snoc[A](firsts: List[A], last: A) extends NonEmpty[A] with SnocOrEmpty[A] {
@@ -232,6 +245,11 @@ object TurtleQ {
     override def map[B](f: (A) => B): Snoc[B] = Snoc(firsts map f, f(last))
 
     override def fold[B](zero: B)(f: (B, A) => B): B = firsts.foldLeft(f(zero, last))(f)
+
+    override def foreach[B](f: (A) => B): Unit = {
+      firsts foreach f
+      f(last)
+    }
   }
 
   final case class TqCA[A](cons: Cons[A], appends: NonEmpty[NonEmpty[A]]) extends NonEmpty[A] {
@@ -298,6 +316,11 @@ object TurtleQ {
       val a = appends.fold(c)((z, e) => e.fold(z)(f))
       a
     }
+
+    override def foreach[B](f: (A) => B): Unit = {
+      cons foreach f
+      appends foreach (_ foreach f)
+    }
   }
 
   final case class TqCAS[A](cons: Cons[A], appends: NonEmpty[NonEmpty[A]], snoc: Snoc[A]) extends NonEmpty[A] {
@@ -350,6 +373,12 @@ object TurtleQ {
       val a = appends.fold(c)((z, e) => e.fold(z)(f))
       val s = snoc.fold(a)(f)
       s
+    }
+
+    override def foreach[B](f: (A) => B): Unit = {
+      cons foreach f
+      appends foreach (_ foreach f)
+      snoc foreach f
     }
   }
 
@@ -410,6 +439,13 @@ object TurtleQ {
       val c = cons.fold(zero)(f)
       val s = snoc.fold(c)(f)
       s
+    }
+
+    override def foreach[B](f: (A) => B): Unit = {
+      f(head)
+      tails foreach f
+      firsts foreach f
+      f(last)
     }
   }
 
@@ -486,6 +522,9 @@ object TurtleQ {
       appends.fold(zero)((z, e) => e.fold(z)(f))
     }
 
+    override def foreach[B](f: (A) => B): Unit = {
+      appends foreach (_ foreach f)
+    }
   }
 
   final case class TqAS[A](appends: NonEmpty[NonEmpty[A]], snoc: Snoc[A]) extends NonEmpty[A] {
@@ -550,6 +589,11 @@ object TurtleQ {
     override def fold[B](zero: B)(f: (B, A) => B): B = {
       val a = appends.fold(zero)((z, e) => e.fold(z)(f))
       snoc.fold(a)(f)
+    }
+
+    override def foreach[B](f: (A) => B): Unit = {
+      appends foreach (_ foreach f)
+      snoc foreach f
     }
   }
 
